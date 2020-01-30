@@ -9,6 +9,8 @@
 #include "FileDesc.h"
 #include "strfuncts.h"
 
+#include <fstream>
+
 const int hashlen = 32;
 const int saltlen = 16;
 
@@ -30,10 +32,38 @@ PasswdMgr::~PasswdMgr() {
 
 bool PasswdMgr::checkUser(const char *name) {
    std::vector<uint8_t> passwd, salt;
+   //std::string uname = "cool";
 
    bool result = findUser(name, passwd, salt);
+   /*bool result = false;
 
-   return result;
+   if (!uname.compare(name)) {
+	   result = true;
+   }*/
+   std::cout << "\nIn checkUser";
+
+   //reads the passwd file to look for existing users
+   std::ifstream fileInput;
+   int offset;
+   std::string line;
+   std::string search = name; // test variable to search in file
+   // open file to search
+   fileInput.open("passwd");
+   if (fileInput.is_open()) {
+	   std::cout << "\nOPEN\n";
+	   //unsigned int curLine = 0;
+	   while (getline(fileInput, line)) { // I changed this, see below
+		   //curLine++;
+		   if (line.find(search, 0) != std::string::npos) {
+			   //std::cout << "found: " << search << "line: " << curLine << "\n";
+			   result = true;
+		   }
+	   }
+	   fileInput.close();
+   }
+   else std::cout << "Unable to open file.";
+
+   return result;///returning true means user already exists
      
 }
 
@@ -54,6 +84,8 @@ bool PasswdMgr::checkPasswd(const char *name, const char *passwd) {
    std::vector<uint8_t> userhash; // hash from the password file
    std::vector<uint8_t> passhash; // hash derived from the parameter passwd
    std::vector<uint8_t> salt;
+
+   std::cout << "\nIn checkPasswd\n";///
 
    // Check if the user exists and get the passwd string
    if (!findUser(name, userhash, salt))
@@ -104,8 +136,10 @@ bool PasswdMgr::changePasswd(const char *name, const char *passwd) {
 bool PasswdMgr::readUser(FileFD &pwfile, std::string &name, std::vector<uint8_t> &hash, std::vector<uint8_t> &salt)
 {
    // Insert your perfect code here!
+	std::cout << "\nIn readUser, name: " << name << "\n";
 
-   return true;
+
+   return false;//returns true if entry read
 }
 
 /*****************************************************************************************************
@@ -126,6 +160,7 @@ int PasswdMgr::writeUser(FileFD &pwfile, std::string &name, std::vector<uint8_t>
    int results = 0;
 
    // Insert your wild code here!
+   std::cout << "\nIn writeUser\n";
 
    return results; 
 }
@@ -150,20 +185,26 @@ bool PasswdMgr::findUser(const char *name, std::vector<uint8_t> &hash, std::vect
 
    // You may need to change this code for your specific implementation
 
+   std::cout << "\nIn findUser, name: " << name << "\n";///
+
    if (!pwfile.openFile(FileFD::readfd))
       throw pwfile_error("Could not open passwd file for reading");
 
    // Password file should be in the format username\n{32 byte hash}{16 byte salt}\n
    bool eof = false;
    while (!eof) {
-      std::string uname;
-
+      std::string uname = "Hello";
+	  //std::cout << "uname : " << uname << "\n";///
       if (!readUser(pwfile, uname, hash, salt)) {
+		 //std::cout << "in loop: " << uname << "\n";///
          eof = true;
          continue;
       }
-
+	  
+	  uname = "Bob";///
+	  ///std::cout << "uname : " << uname << "\n";///if readUser is true will come here
       if (!uname.compare(name)) {
+		 std::cout << "in uname loop : " << uname << "\n";
          pwfile.closeFD();
          return true;
       }
@@ -200,5 +241,18 @@ void PasswdMgr::hashArgon2(std::vector<uint8_t> &ret_hash, std::vector<uint8_t> 
 
 void PasswdMgr::addUser(const char *name, const char *passwd) {
    // Add those users!
+	std::cout << "\nIn addUser\n";
+	//std::ofstream passwd(name << "  " << passwd ".txt", std::ios::app);
+
+	//opening passwd file and new adding users and password
+	std::ofstream ofs;
+	ofs.open("passwd", std::ofstream::out | std::ofstream::app);
+
+	ofs << "\n" << name << "   " << passwd << "\n";
+
+	ofs.close();
+	//std::cout << "\nname: " << name << "\npasswd: " << passwd << "\n";
+
+
 }
 

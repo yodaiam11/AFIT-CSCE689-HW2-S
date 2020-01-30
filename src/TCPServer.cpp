@@ -38,6 +38,8 @@ void TCPServer::bindSvr(const char *ip_addr, short unsigned int port) {
 
    // Load the socket information to prep for binding
    _sockfd.bindFD(ip_addr, port);
+
+   _ipaddress = ip_addr;
  
 }
 
@@ -59,32 +61,56 @@ void TCPServer::listenSvr() {
 
    // Start the server socket listening
    _sockfd.listenFD(5);
-
+   
+   bool whiteList = false;///
     
    while (online) {
-      struct sockaddr_in cliaddr;
-      socklen_t len = sizeof(cliaddr);
+        struct sockaddr_in cliaddr;
+        socklen_t len = sizeof(cliaddr);
+		//std::cout << "\nclient ipaddress: " << _ipaddress;
+	  
 
-      if (_sockfd.hasData()) {
-         TCPConn *new_conn = new TCPConn();
-         if (!new_conn->accept(_sockfd)) {
-            // _server_log.strerrLog("Data received on socket but failed to accept.");
-            continue;
-         }
-         std::cout << "***Got a connection***\n";
+		if (_sockfd.hasData()) {
+			TCPConn* new_conn = new TCPConn();
+			if (!new_conn->accept(_sockfd)) {
+				 //_server_log.strerrLog("Data received on socket but failed to accept.");
+				continue;
+			}
+			//
+			while (whiteList == false) {
+				//bool check = false;
+				//std::cout << "\nclient ipaddress: " << _ipaddress;
+				whiteList = (new_conn->checkWhitelist(_ipaddress));
+				//whiteList == check;
 
-         _connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
+				if (whiteList == false) {
+					new_conn->sendText("You are not authorized to connect\n");
+					new_conn->disconnect();
+				}
+				//continue;
+			}
+			if (whiteList == true){
+				std::cout << "***Got a connection***\n";
 
-         // Get their IP Address string to use in logging
-         std::string ipaddr_str;
-         new_conn->getIPAddrStr(ipaddr_str);
+				_connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
+
+				// Get their IP Address string to use in logging
+				std::string ipaddr_str;
+				new_conn->getIPAddrStr(ipaddr_str);
 
 
-         new_conn->sendText("Welcome to the CSCE 689 Server!\n");
+				new_conn->sendText("Welcome to the CSCE 689 Server!\n");
 
-         // Change this later
-         new_conn->startAuthentication();
-      }
+				// Change this later
+				new_conn->startAuthentication();
+				//new_conn->getMenuChoice();///
+				//std::string readbuf;///
+				//new_conn->getUserInput(readbuf);///
+			} else
+				new_conn->sendText("connection not working\n");
+		} 
+
+	 
 
       // Loop through our connections, handling them
       std::list<std::unique_ptr<TCPConn>>::iterator tptr = _connlist.begin();

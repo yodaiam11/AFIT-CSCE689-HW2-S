@@ -13,6 +13,7 @@
 
 #include "TCPClient.h"
 
+#include <iostream>
 
 /**********************************************************************************************
  * TCPClient (constructor) - Creates a Stdin file descriptor to simplify handling of user input. 
@@ -39,6 +40,7 @@ TCPClient::~TCPClient() {
  **********************************************************************************************/
 
 void TCPClient::connectTo(const char *ip_addr, unsigned short port) {
+
    if (!_sockfd.connectTo(ip_addr, port))
       throw socket_error("TCP Connection failed!");
 
@@ -62,10 +64,11 @@ void TCPClient::handleConnection() {
    sleeptime.tv_sec = 0;
    sleeptime.tv_nsec = 1000000;
 
+   //std::cout << "\nIn Client handleConnection\n";///
 
    // Loop while we have a valid connection
    while (connected) {
-
+	  
       // If the connection was closed, exit
       if (!_sockfd.isOpen())
          break;

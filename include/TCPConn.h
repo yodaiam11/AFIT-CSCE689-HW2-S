@@ -18,6 +18,10 @@ public:
    int sendText(const char *msg);
    int sendText(const char *msg, int size);
 
+   int count = 0;///
+   std::string _ipaddress;///
+   bool whiteList;///
+
    void handleConnection();
    void startAuthentication();
    void getUsername();
@@ -28,6 +32,9 @@ public:
    void changePassword();
    
    bool getUserInput(std::string &cmd);
+
+   bool checkWhitelist(std::string _ipaddress);///
+
 
    void disconnect();
    bool isConnected();
