@@ -17,7 +17,8 @@ class PasswdMgr {
 
       bool checkUser(const char *name);
       bool checkPasswd(const char *name, const char *passwd);
-      bool changePasswd(const char *name, const char *newpassd);
+      //bool changePasswd(const char *name, const char *newpassd);
+	  bool changePasswd(std::string name, std::string newpassd);///
    
       void addUser(const char *name, const char *passwd);
 

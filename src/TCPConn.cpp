@@ -7,7 +7,8 @@
 #include "TCPConn.h"
 #include "strfuncts.h"
 
-#include <fstream>
+#include <fstream>///
+
 // The filename/path of the password file
 const char pwdfilename[] = "passwd";
 
@@ -141,7 +142,9 @@ void TCPConn::getUsername() {
 		return;
 	lower(cmd);
 
-	std::cout << "\nIn getUsername cmd: " << cmd << "\n";
+	_username = cmd;
+
+	//std::cout << "\nIn getUsername cmd: " << cmd << "\n";
 
 	//reads the passwd file to look for existing users
 	bool exit = true;
@@ -167,6 +170,8 @@ void TCPConn::getUsername() {
 		}
 		fileInput.close();
 		if (exit == true) {
+			logEvent = "Username entered that is not recognized - user: " + cmd + "   ipaddress: ";
+			eventLog(logEvent, _ipaddress);
 			_connfd.writeFD("User not authorized, goodbye!\n");
 			disconnect();
 		}
@@ -199,7 +204,7 @@ void TCPConn::getUsername() {
  **********************************************************************************************/
 
 void TCPConn::getPasswd() {
-   // Insert your astounding code here
+    // Insert your astounding code here
 	//std::cout << "\nIn getPasswd\n";
 	//_connfd.writeFD("\nPlease enter your password: \n");
 	bool check = false;
@@ -222,6 +227,7 @@ void TCPConn::getPasswd() {
 		std::string line;
 		std::string passsearch = _username + "   " + cmd; // test variable to search in file
 
+
 		// open file to search
 		fileInput.open("passwd");
 		if (fileInput.is_open()) {
@@ -233,9 +239,12 @@ void TCPConn::getPasswd() {
 					//std::cout << "found: " << search << "line: " << curLine << "\n";
 					std::cout << "\npassword found\n";
 					//_status = s_passwd;
+					logEvent = "Successful login - user: " + _username + "   ipaddress: ";
+					eventLog(logEvent, _ipaddress);
 					exit = false;
 					check = true;
 					count = 3;
+					oldPass = cmd;
 				}
 			}
 			count ++;
@@ -246,6 +255,8 @@ void TCPConn::getPasswd() {
 				//count ++;
 			}
 			if (exit == true && count == 2) {
+				logEvent = "User who failed to input their password twice - user: " + _username + "   ipaddress: ";
+				eventLog(logEvent, _ipaddress);
 				_connfd.writeFD("Not the correct password, goodbye!\n");
 				disconnect();
 			}
@@ -255,6 +266,7 @@ void TCPConn::getPasswd() {
 
 	_connfd.writeFD("\nPlease enter a command from the menu\n\nType menu to see the options available\n\nUser Input: ");
 	_status = s_menu;
+	userCount = 1;
 }
 
 /**********************************************************************************************
@@ -267,30 +279,69 @@ void TCPConn::getPasswd() {
  **********************************************************************************************/
 
 void TCPConn::changePassword() {
-   // Insert your amazing code here
-	if (!_connfd.hasData())
-		return;
-	std::string cmd;
-	if (!getUserInput(cmd))
-		return;
-	lower(cmd);
+	// Insert your amazing code here
+	std::string compNewPass;
+	std::string cmd2;
+	std::string cmd3;
+	bool checkNew = false;
 
-	if (cmd.compare("password") == 0) {
-		_connfd.writeFD("\nPlease enter your new password: \n");
-		//sendCheckPasswd();
-	}
-	else if (cmd.compare("new password") == 0) {
-		_connfd.writeFD("\nPlease enter your new password: \n");
-		//take input and then tell them to enter it again
-		//_connfd.writeFD("\nNot the correct password, Please try again: \n");
-		//compare the two passwords
-		//sendStorePasswd();
+	PasswdMgr* pass_passwd = new PasswdMgr(pwdfilename);
 
-	} else {
-		_connfd.writeFD("\nNot the correct password, Please try again: \n");
+	//std::cout << "\nold passwd: " << oldPass;
+	//_connfd.writeFD("\noutside 1st while loop\n");
+	//try and put in PasswdMgr
+	while (passCount == 0) {
+		//_connfd.writeFD("\nINside 1st while loop\n");
+		//passCount = 0;
+		if (!_connfd.hasData())
+			return;
+
+		if (!getUserInput(cmd2))
+			return;
+		lower(cmd2);
+		newPass = cmd2;
+		//checkNew = true;
+		_connfd.writeFD("\nPlease re-enter your new password: \n");
+		s_confirmpwd;
+		passCount = 1;
+		//while (checkNew == false) {
+
 	}
+
+	if (!_connfd.hasData()) 
+		return;
+			
+			
+	if (!getUserInput(cmd3)) 
+		return;
+			
+	lower(cmd3);
+	compNewPass = cmd3;
+	std::cout << "\nnewPass: " << newPass << "\ncomNewPass: " << compNewPass << "\n";
+	if (newPass == compNewPass) {
+		_connfd.writeFD("Password change successful\n");
+		checkNew = true;
+		passCount = 0;
+
+		bool test = pass_passwd->changePasswd(_username, newPass);
+		//break;
+		//passCount ++;
+	}
+	else {
+		_connfd.writeFD("Password change failed, passwords did not match\n");
+		passCount = 0;
+		//passCount ++;
+	}
+
+		//}
+
+	//}
+
+	//std::cout << "\nnew passwd: " << newPass << "\n";
+
+	_connfd.writeFD("\nPlease enter a command from the menu\n\nType menu to see the options available\n\nUser Input: ");
+	_status = s_menu;
 }
-
 
 /**********************************************************************************************
  * getUserInput - Gets user data and includes a buffer to look for a carriage return before it is
@@ -354,10 +405,10 @@ void TCPConn::getMenuChoice() {
       _connfd.writeFD("Disconnecting...goodbye!\n");
       disconnect();
    } else if (cmd.compare("passwd") == 0) {
-      _connfd.writeFD("New Password: ");
       _status = s_changepwd;
+	  _connfd.writeFD("\nPlease enter your new password: \n");
    } else if (cmd.compare("1") == 0) {
-      msg += "Menu 1\nThe weather is going to be hot, cold, rain, snow, cloudy, or sunny combination of these.\n\n";
+      msg += "Menu 1\nThe weather is going to be hot, cold, rainy, snowy, cloudy, sunny or a combination of these.\n\n";
       _connfd.writeFD(msg);
    } else if (cmd.compare("2") == 0) {
       _connfd.writeFD("Menu 2\nWhat do you call cheese that's not yours?\nNacho cheese\n\n");
@@ -406,6 +457,11 @@ void TCPConn::sendMenu() {
  **********************************************************************************************/
 void TCPConn::disconnect() {
    _connfd.closeFD();
+   if (userCount == 1) {
+	   logEvent = "Disconnected - user: " + _username + "   ipaddress: ";
+	   eventLog(logEvent, _ipaddress);
+	   userCount = 0;
+   }
 }
 
 
@@ -429,8 +485,8 @@ void TCPConn::getIPAddrStr(std::string &buf) {
 }
 
 //checks if ip address of client is on whitelist///
-bool TCPConn::checkWhitelist(std::string _ipaddress) {
-	std::cout << "\ncheckWhitelist ipaddress: " << _ipaddress << "\n";
+bool TCPConn::checkWhitelist(std::string ipaddress) {
+	//std::cout << "\ncheckWhitelist ipaddress: " << _ipaddress << "\n";
 	//whiteList == true;
 
 	//reads the passwd file to look for existing users
@@ -438,23 +494,43 @@ bool TCPConn::checkWhitelist(std::string _ipaddress) {
 	std::ifstream fileInput;
 	int offset;
 	std::string line;
-	std::string search = _ipaddress; // test variable to search in file
+	std::string search = ipaddress; // test variable to search in file
+	_ipaddress = ipaddress;
+
 	// open file to search
 	fileInput.open("whitelist");
 	if (fileInput.is_open()) {
 		while (getline(fileInput, line)) {
 			if (line.find(search, 0) != std::string::npos) {
 				std::cout << "ipaddress found\n";
+				logEvent = "New connection authorized on whitelist - ipaddress: ";
+				eventLog(logEvent, search);
 				ip = false;
 				return true;
 			}
 		}
 		fileInput.close();
 		if (ip == true) {
+			logEvent = "New connection not on whitelist - ipaddress: ";
+			eventLog(logEvent, search);
 			return false;
 		}
 	}
 	else std::cout << "Unable to open file.";
+}
+
+void TCPConn::eventLog(std::string logEvent, std::string ipaddress) {
+	//to get current time for when server is established//
+	time_t current_time = time(0);
+	char* now = ctime(&current_time);
+	//_ipaddress = ipaddress;
+
+	//writes server startup to log file///
+	std::ofstream ofs;
+	ofs.open("log", std::ofstream::out | std::ofstream::app);
+	ofs << logEvent << _ipaddress << "   Time: " << now;
+	ofs.close();
+
 }
 
 

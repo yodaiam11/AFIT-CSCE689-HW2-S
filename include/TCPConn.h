@@ -3,6 +3,8 @@
 
 #include "FileDesc.h"
 
+#include "PasswdMgr.h"///
+
 const int max_attempts = 2;
 
 // Methods and attributes to manage a network connection, including tracking the username
@@ -19,8 +21,13 @@ public:
    int sendText(const char *msg, int size);
 
    int count = 0;///
-   std::string _ipaddress;///
+   int userCount = 0;///
+   int passCount = 0;///
+   std::string logEvent;///
+   std::string oldPass;///
+   std::string newPass;///
    bool whiteList;///
+   bool checkWhitelist(std::string ipaddress);///
 
    void handleConnection();
    void startAuthentication();
@@ -30,11 +37,9 @@ public:
    void getMenuChoice();
    void setPassword();
    void changePassword();
+   void eventLog(std::string logEvent, std::string ipaddress);///
    
    bool getUserInput(std::string &cmd);
-
-   bool checkWhitelist(std::string _ipaddress);///
-
 
    void disconnect();
    bool isConnected();
@@ -57,6 +62,8 @@ private:
    std::string _inputbuf;
 
    std::string _newpwd; // Used to store user input for changing passwords
+
+   std::string _ipaddress;///
 
    int _pwd_attempts = 0;
 };

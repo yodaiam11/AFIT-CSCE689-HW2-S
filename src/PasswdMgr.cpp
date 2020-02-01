@@ -9,7 +9,9 @@
 #include "FileDesc.h"
 #include "strfuncts.h"
 
-#include <fstream>
+#include <fstream>///
+#include <TCPConn.h>///
+#include <string> ///
 
 const int hashlen = 32;
 const int saltlen = 16;
@@ -51,11 +53,8 @@ bool PasswdMgr::checkUser(const char *name) {
    fileInput.open("passwd");
    if (fileInput.is_open()) {
 	   std::cout << "\nOPEN\n";
-	   //unsigned int curLine = 0;
-	   while (getline(fileInput, line)) { // I changed this, see below
-		   //curLine++;
+	   while (getline(fileInput, line)) { 
 		   if (line.find(search, 0) != std::string::npos) {
-			   //std::cout << "found: " << search << "line: " << curLine << "\n";
 			   result = true;
 		   }
 	   }
@@ -112,9 +111,90 @@ bool PasswdMgr::checkPasswd(const char *name, const char *passwd) {
  *
  *******************************************************************************************/
 
-bool PasswdMgr::changePasswd(const char *name, const char *passwd) {
+bool PasswdMgr::changePasswd(std::string name, std::string passwd) {
 
-   // Insert your insane code here
+	std::cout << "\nin PassMgr changePasswd\nname: " << name << "\npasswd: " << passwd << "\n";
+
+		//using namespace std;
+
+		//ifstream is("in.txt");
+		//if (!is)
+		//	return -1;
+
+		//ofstream os("out.txt");
+		//if (!os)
+		//	return -2;
+
+		//string f = "Electric";
+		//string r = "";
+
+		//string s;
+		//while (getline(is, s)) // read from is
+		//{
+		//	// replace one:
+		//	std::size_t p = s.find( f );
+		//	if ( p != std::string::npos )
+		//	  s.replace( p, f.length(), "" );
+
+		//	// replace all:
+		//	//for (size_t p = s.find(f); p != string::npos; p = s.find(f, p))
+		//		s.replace(p, f.length(), r);
+
+		//	os << s << endl; // write to os
+		//}
+
+		//return 0;
+
+	//bool exit = true;
+	std::ifstream fileInput;
+	std::ofstream os;
+	//int offset;
+	std::string line;
+	//std::string passsearch = name;// +"   " + cmd;
+
+	fileInput.open("passwd");
+	if (fileInput.is_open()) {
+		while (getline(fileInput, line)) {
+			//if (line.find(name, 0) != std::string::npos) {
+			os.open("passwd", std::ofstream::out | std::ofstream::app);
+
+			std::cout << "\nuser in PasswdMgr found\n";
+			std::string replacePass = name + "   " + passwd;
+
+			std::size_t p = line.find(name);
+			if ( p != std::string::npos )
+				line.replace( p, name.length(), passwd );
+
+			//std::cout << "line.replace: " << line.replace << "p: " << p << "name.length: " << name.length << "passwd: " << passwd;
+
+			//os.open("passwd", std::ofstream::out | std::ofstream::app);
+			os << name << "   " << passwd; // write to o
+			os.close();
+
+			//size_t rpos = name.find(passwd);
+			//if (rpos != std::string::npos)
+				//name.replace(name.begin() + rpos, name.begin() + rpos + passwd.length(), passwd);
+
+			//auto pos = line.find(name);
+			//line.replace(pos, name.length(), replacePass);
+
+			//line.replace(replacePass);
+			//auto pos = line.find(name);
+			//while (pos != std::string::npos) {
+			//replace(pos, name.length(), replacePass, replacePass.length());
+			//	 Continue searching from here.
+			//	pos = find(name, pos);
+			//}
+
+			/*std::ofstream ofs;
+			ofs.open("passwd", std::ofstream::out | std::ofstream::app);
+			ofs << name << "   " << passwd;
+			ofs.close();*/
+
+		}
+		//}
+		fileInput.close();
+	}
 
    return true;
 }

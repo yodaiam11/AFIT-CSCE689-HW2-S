@@ -12,6 +12,9 @@
 #include <sstream>
 #include "TCPServer.h"
 
+#include <time.h>///
+#include <fstream>///
+
 TCPServer::TCPServer(){ // :_server_log("server.log", 0) {
 }
 
@@ -30,6 +33,11 @@ TCPServer::~TCPServer() {
 void TCPServer::bindSvr(const char *ip_addr, short unsigned int port) {
 
    struct sockaddr_in servaddr;
+   
+   //to get current time for when server is established///
+   time_t current_time = time(0);
+   char* now = ctime(&current_time);
+   //std::cout << "\ncurrent time: " << now << "\n";
 
    // _server_log.writeLog("Server started.");
 
@@ -40,6 +48,12 @@ void TCPServer::bindSvr(const char *ip_addr, short unsigned int port) {
    _sockfd.bindFD(ip_addr, port);
 
    _ipaddress = ip_addr;
+
+   //writes server startup to log file///
+   std::ofstream ofs;
+   ofs.open("log", std::ofstream::out | std::ofstream::app);
+   ofs << "\nServer startup - time: " << now;
+   ofs.close();
  
 }
 
@@ -72,6 +86,7 @@ void TCPServer::listenSvr() {
 
 		if (_sockfd.hasData()) {
 			TCPConn* new_conn = new TCPConn();
+			whiteList = false;
 			if (!new_conn->accept(_sockfd)) {
 				 //_server_log.strerrLog("Data received on socket but failed to accept.");
 				continue;
@@ -86,11 +101,13 @@ void TCPServer::listenSvr() {
 				if (whiteList == false) {
 					new_conn->sendText("You are not authorized to connect\n");
 					new_conn->disconnect();
+					break;
 				}
 				//continue;
 			}
 			if (whiteList == true){
 				std::cout << "***Got a connection***\n";
+				//whiteList = (new_conn->checkWhitelist(_ipaddress));
 
 				_connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
 
