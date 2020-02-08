@@ -37,7 +37,6 @@ void TCPServer::bindSvr(const char *ip_addr, short unsigned int port) {
    //to get current time for when server is established///
    time_t current_time = time(0);
    char* now = ctime(&current_time);
-   //std::cout << "\ncurrent time: " << now << "\n";
 
    // _server_log.writeLog("Server started.");
 
@@ -81,8 +80,6 @@ void TCPServer::listenSvr() {
    while (online) {
         struct sockaddr_in cliaddr;
         socklen_t len = sizeof(cliaddr);
-		//std::cout << "\nclient ipaddress: " << _ipaddress;
-	  
 
 		if (_sockfd.hasData()) {
 			TCPConn* new_conn = new TCPConn();
@@ -91,38 +88,27 @@ void TCPServer::listenSvr() {
 				 //_server_log.strerrLog("Data received on socket but failed to accept.");
 				continue;
 			}
-			//
+			//enables whitelist functionality
 			while (whiteList == false) {
-				//bool check = false;
-				//std::cout << "\nclient ipaddress: " << _ipaddress;
 				whiteList = (new_conn->checkWhitelist(_ipaddress));
-				//whiteList == check;
-
 				if (whiteList == false) {
 					new_conn->sendText("You are not authorized to connect\n");
 					new_conn->disconnect();
 					break;
 				}
-				//continue;
 			}
 			if (whiteList == true){
 				std::cout << "***Got a connection***\n";
-				//whiteList = (new_conn->checkWhitelist(_ipaddress));
-
 				_connlist.push_back(std::unique_ptr<TCPConn>(new_conn));
 
 				// Get their IP Address string to use in logging
 				std::string ipaddr_str;
 				new_conn->getIPAddrStr(ipaddr_str);
 
-
 				new_conn->sendText("Welcome to the CSCE 689 Server!\n");
 
 				// Change this later
 				new_conn->startAuthentication();
-				//new_conn->getMenuChoice();///
-				//std::string readbuf;///
-				//new_conn->getUserInput(readbuf);///
 			} else
 				new_conn->sendText("connection not working\n");
 		} 

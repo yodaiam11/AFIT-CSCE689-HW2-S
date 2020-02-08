@@ -12,9 +12,10 @@
 #include <fstream>///
 #include <TCPConn.h>///
 #include <string> ///
+#include <vector>///
 
-const int hashlen = 32;
-const int saltlen = 16;
+const int HASHLEN = 32;///
+const int SALTLEN = 16;///
 
 PasswdMgr::PasswdMgr(const char *pwd_file):_pwd_file(pwd_file) {
 
@@ -34,21 +35,14 @@ PasswdMgr::~PasswdMgr() {
 
 bool PasswdMgr::checkUser(const char *name) {
    std::vector<uint8_t> passwd, salt;
-   //std::string uname = "cool";
 
    bool result = findUser(name, passwd, salt);
-   /*bool result = false;
-
-   if (!uname.compare(name)) {
-	   result = true;
-   }*/
-   std::cout << "\nIn checkUser";
 
    //reads the passwd file to look for existing users
    std::ifstream fileInput;
    int offset;
    std::string line;
-   std::string search = name; // test variable to search in file
+   std::string search = name;
    // open file to search
    fileInput.open("passwd");
    if (fileInput.is_open()) {
@@ -80,17 +74,18 @@ bool PasswdMgr::checkUser(const char *name) {
  *******************************************************************************************/
 
 bool PasswdMgr::checkPasswd(const char *name, const char *passwd) {
+//bool PasswdMgr::checkPasswd(std::string name, std::string passwd) {
    std::vector<uint8_t> userhash; // hash from the password file
    std::vector<uint8_t> passhash; // hash derived from the parameter passwd
    std::vector<uint8_t> salt;
 
-   std::cout << "\nIn checkPasswd\n";///
+   //std::cout << "\nIn checkPasswd\n";///
 
    // Check if the user exists and get the passwd string
    if (!findUser(name, userhash, salt))
       return false;
 
-   hashArgon2(passhash, salt, passwd, &salt);
+   //hashArgon2(passhash, salt, passwd, &salt);
 
    if (userhash == passhash)
       return true;
@@ -113,88 +108,38 @@ bool PasswdMgr::checkPasswd(const char *name, const char *passwd) {
 
 bool PasswdMgr::changePasswd(std::string name, std::string passwd) {
 
-	std::cout << "\nin PassMgr changePasswd\nname: " << name << "\npasswd: " << passwd << "\n";
-
-		//using namespace std;
-
-		//ifstream is("in.txt");
-		//if (!is)
-		//	return -1;
-
-		//ofstream os("out.txt");
-		//if (!os)
-		//	return -2;
-
-		//string f = "Electric";
-		//string r = "";
-
-		//string s;
-		//while (getline(is, s)) // read from is
-		//{
-		//	// replace one:
-		//	std::size_t p = s.find( f );
-		//	if ( p != std::string::npos )
-		//	  s.replace( p, f.length(), "" );
-
-		//	// replace all:
-		//	//for (size_t p = s.find(f); p != string::npos; p = s.find(f, p))
-		//		s.replace(p, f.length(), r);
-
-		//	os << s << endl; // write to os
-		//}
-
-		//return 0;
-
-	//bool exit = true;
-	std::ifstream fileInput;
-	std::ofstream os;
-	//int offset;
-	std::string line;
-	//std::string passsearch = name;// +"   " + cmd;
-
-	fileInput.open("passwd");
-	if (fileInput.is_open()) {
-		while (getline(fileInput, line)) {
-			//if (line.find(name, 0) != std::string::npos) {
-			os.open("passwd", std::ofstream::out | std::ofstream::app);
-
-			std::cout << "\nuser in PasswdMgr found\n";
-			std::string replacePass = name + "   " + passwd;
-
-			std::size_t p = line.find(name);
-			if ( p != std::string::npos )
-				line.replace( p, name.length(), passwd );
-
-			//std::cout << "line.replace: " << line.replace << "p: " << p << "name.length: " << name.length << "passwd: " << passwd;
-
-			//os.open("passwd", std::ofstream::out | std::ofstream::app);
-			os << name << "   " << passwd; // write to o
-			os.close();
-
-			//size_t rpos = name.find(passwd);
-			//if (rpos != std::string::npos)
-				//name.replace(name.begin() + rpos, name.begin() + rpos + passwd.length(), passwd);
-
-			//auto pos = line.find(name);
-			//line.replace(pos, name.length(), replacePass);
-
-			//line.replace(replacePass);
-			//auto pos = line.find(name);
-			//while (pos != std::string::npos) {
-			//replace(pos, name.length(), replacePass, replacePass.length());
-			//	 Continue searching from here.
-			//	pos = find(name, pos);
-			//}
-
-			/*std::ofstream ofs;
-			ofs.open("passwd", std::ofstream::out | std::ofstream::app);
-			ofs << name << "   " << passwd;
-			ofs.close();*/
-
-		}
-		//}
-		fileInput.close();
+	//assigns passwd file and makes sure it can open
+	std::ifstream fileIn("passwd");
+	if (!fileIn.is_open())
+	{
+		std::cout << "Failed to open file!\n";
+		return 0;
 	}
+
+	std::string data;
+	std::vector<std::string> myVec;  
+	int i = 0;
+	//makes vector to search through passwd file
+	while (fileIn >> data) 
+	{
+		myVec.push_back(data);
+	}
+	//iterates through passwd file to find username & passwd to change
+	for (std::string::size_type i = 0; i < myVec.size(); i++) {
+		if (myVec[i] == name)
+			myVec[i + 1] = passwd;
+	}
+
+	
+	std::ofstream ofs;
+	ofs.open("passwd", std::ofstream::out);
+	//changes passwd in file
+	for (std::string::size_type i = 0; i < myVec.size(); i++) {
+		ofs << myVec[i] << "\n" << myVec[i + 1] << "\n";
+		i++;
+	}
+
+	ofs.close();
 
    return true;
 }
@@ -216,7 +161,7 @@ bool PasswdMgr::changePasswd(std::string name, std::string passwd) {
 bool PasswdMgr::readUser(FileFD &pwfile, std::string &name, std::vector<uint8_t> &hash, std::vector<uint8_t> &salt)
 {
    // Insert your perfect code here!
-	std::cout << "\nIn readUser, name: " << name << "\n";
+	//std::cout << "\nIn readUser, name: " << name << "\n";
 
 
    return false;//returns true if entry read
@@ -240,7 +185,7 @@ int PasswdMgr::writeUser(FileFD &pwfile, std::string &name, std::vector<uint8_t>
    int results = 0;
 
    // Insert your wild code here!
-   std::cout << "\nIn writeUser\n";
+   //std::cout << "\nIn writeUser\n";
 
    return results; 
 }
@@ -259,32 +204,24 @@ int PasswdMgr::writeUser(FileFD &pwfile, std::string &name, std::vector<uint8_t>
  *
  *****************************************************************************************************/
 
-bool PasswdMgr::findUser(const char *name, std::vector<uint8_t> &hash, std::vector<uint8_t> &salt) {
+bool PasswdMgr::findUser(std::string name, std::vector<uint8_t> &hash, std::vector<uint8_t> &salt) {
 
    FileFD pwfile(_pwd_file.c_str());
 
    // You may need to change this code for your specific implementation
-
-   std::cout << "\nIn findUser, name: " << name << "\n";///
-
    if (!pwfile.openFile(FileFD::readfd))
       throw pwfile_error("Could not open passwd file for reading");
 
    // Password file should be in the format username\n{32 byte hash}{16 byte salt}\n
    bool eof = false;
    while (!eof) {
-      std::string uname = "Hello";
-	  //std::cout << "uname : " << uname << "\n";///
+	   std::string uname;
       if (!readUser(pwfile, uname, hash, salt)) {
-		 //std::cout << "in loop: " << uname << "\n";///
          eof = true;
          continue;
       }
 	  
-	  uname = "Bob";///
-	  ///std::cout << "uname : " << uname << "\n";///if readUser is true will come here
       if (!uname.compare(name)) {
-		 std::cout << "in uname loop : " << uname << "\n";
          pwfile.closeFD();
          return true;
       }
@@ -306,10 +243,35 @@ bool PasswdMgr::findUser(const char *name, std::vector<uint8_t> &hash, std::vect
  *
  *    Throws: runtime_error if the salt passed in is not the right size
  *****************************************************************************************************/
-void PasswdMgr::hashArgon2(std::vector<uint8_t> &ret_hash, std::vector<uint8_t> &ret_salt, 
-                           const char *in_passwd, std::vector<uint8_t> *in_salt) {
-   // Hash those passwords!!!!
+//void PasswdMgr::hashArgon2(std::vector<uint8_t> &ret_hash, std::vector<uint8_t> &ret_salt, const char *in_passwd, std::vector<uint8_t> *in_salt) {
+void PasswdMgr::hashArgon2(const char* in_passwd)
+{
+	char saltCharArray[16];
+	char hashCharArray[32];
+	std::string saltString;
+	std::string hashString;
 
+   // Hash those passwords!!!!
+	uint8_t hash1[HASHLEN];
+	uint8_t salt[SALTLEN];
+	//assigns random salt to each user
+	for (unsigned int i = 0; i < SALTLEN; i++)
+		salt[i] = ((rand() % 93) + 33);	
+
+	uint8_t* pwd = (uint8_t*)strdup(in_passwd);
+	uint32_t pwdlen = strlen((char*)pwd);
+	uint32_t t_cost = 2;            
+	uint32_t m_cost = (1 << 16);      
+	uint32_t parallelism = 1;       
+
+	//creates hash using salt from above
+	argon2i_hash_raw(t_cost, m_cost, parallelism, pwd, pwdlen, salt, SALTLEN, hash1, HASHLEN);
+
+	//opening passwd file and new adding users and password
+	std::ofstream ofs;
+	ofs.open("passwd", std::ofstream::out | std::ofstream::app);
+	ofs << "hash:" << hash1 << "\n" <<"salt:" << salt << "\n";
+	ofs.close();
 }
 
 /****************************************************************************************************
@@ -320,19 +282,15 @@ void PasswdMgr::hashArgon2(std::vector<uint8_t> &ret_hash, std::vector<uint8_t> 
  ****************************************************************************************************/
 
 void PasswdMgr::addUser(const char *name, const char *passwd) {
-   // Add those users!
-	std::cout << "\nIn addUser\n";
-	//std::ofstream passwd(name << "  " << passwd ".txt", std::ios::app);
-
-	//opening passwd file and new adding users and password
+	// Add those users!
+	srand(time(0));
+	//adding users to passwd file
 	std::ofstream ofs;
 	ofs.open("passwd", std::ofstream::out | std::ofstream::app);
-
-	ofs << "\n" << name << "   " << passwd << "\n";
-
+	ofs << name << "\n" << passwd << "\n"; //<< "   " << hash1 << "   " << salt << "\n";
 	ofs.close();
-	//std::cout << "\nname: " << name << "\npasswd: " << passwd << "\n";
-
+	//send passwd to get hashed
+	hashArgon2(passwd);
 
 }
 

@@ -64,8 +64,6 @@ void TCPClient::handleConnection() {
    sleeptime.tv_sec = 0;
    sleeptime.tv_nsec = 1000000;
 
-   //std::cout << "\nIn Client handleConnection\n";///
-
    // Loop while we have a valid connection
    while (connected) {
 	  

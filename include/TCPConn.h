@@ -4,6 +4,7 @@
 #include "FileDesc.h"
 
 #include "PasswdMgr.h"///
+#include <fstream>///
 
 const int max_attempts = 2;
 
@@ -19,15 +20,15 @@ public:
 
    int sendText(const char *msg);
    int sendText(const char *msg, int size);
-
-   int count = 0;///
-   int userCount = 0;///
-   int passCount = 0;///
-   std::string logEvent;///
-   std::string oldPass;///
-   std::string newPass;///
-   bool whiteList;///
-   bool checkWhitelist(std::string ipaddress);///
+   //added variables for various functions
+   int count = 0;
+   int userCount = 0;
+   int passCount = 0;
+   std::string logEvent;
+   std::string oldPass;
+   std::string newPass;
+   bool whiteList;
+   bool checkWhitelist(std::string ipaddress);
 
    void handleConnection();
    void startAuthentication();
@@ -37,7 +38,7 @@ public:
    void getMenuChoice();
    void setPassword();
    void changePassword();
-   void eventLog(std::string logEvent, std::string ipaddress);///
+   void eventLog(std::string logEvent, std::string ipaddress);
    
    bool getUserInput(std::string &cmd);
 
@@ -63,7 +64,7 @@ private:
 
    std::string _newpwd; // Used to store user input for changing passwords
 
-   std::string _ipaddress;///
+   std::string _ipaddress;
 
    int _pwd_attempts = 0;
 };
